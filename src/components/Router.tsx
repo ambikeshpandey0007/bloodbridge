@@ -2,6 +2,13 @@ import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
+import HomePage from '@/components/pages/HomePage';
+import PublicRegistrationPage from '@/components/pages/PublicRegistrationPage';
+import HospitalRegistrationPage from '@/components/pages/HospitalRegistrationPage';
+import PublicDashboardPage from '@/components/pages/PublicDashboardPage';
+import HospitalDashboardPage from '@/components/pages/HospitalDashboardPage';
+import BloodAvailabilityPage from '@/components/pages/BloodAvailabilityPage';
+import SOSAlertPage from '@/components/pages/SOSAlertPage';
 
 // Layout component that includes ScrollToTop
 function Layout() {
@@ -21,10 +28,34 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <div>Wix Vibe</div>,
+        element: <HomePage />,
         routeMetadata: {
           pageIdentifier: 'home',
         },
+      },
+      {
+        path: "public-registration",
+        element: <PublicRegistrationPage />,
+      },
+      {
+        path: "hospital-registration",
+        element: <HospitalRegistrationPage />,
+      },
+      {
+        path: "public-dashboard",
+        element: <PublicDashboardPage />,
+      },
+      {
+        path: "hospital-dashboard",
+        element: <HospitalDashboardPage />,
+      },
+      {
+        path: "blood-availability",
+        element: <BloodAvailabilityPage />,
+      },
+      {
+        path: "sos-alert",
+        element: <SOSAlertPage />,
       },
       {
         path: "*",
