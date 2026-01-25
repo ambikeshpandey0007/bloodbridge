@@ -4,10 +4,10 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BaseCrudService } from '@/integrations';
-import { SOSAlerts, AlertResponses, PublicUsers } from '@/entities';
+import { SOSAlerts, AlertResponses, PublicUsers, Hospitals } from '@/entities';
 import Header from '@/components/Header'
 import Footer from '@/components/Footer';
-import { ArrowLeft, Heart, Phone, Droplet, User } from 'lucide-react';
+import { ArrowLeft, Heart, Phone, Droplet, User, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function SOSResponsesPage() {
@@ -16,6 +16,7 @@ export default function SOSResponsesPage() {
   const [alert, setAlert] = useState<SOSAlerts | null>(null);
   const [responses, setResponses] = useState<AlertResponses[]>([]);
   const [donors, setDonors] = useState<Map<string, PublicUsers>>(new Map());
+  const [hospitals, setHospitals] = useState<Map<string, Hospitals>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -35,17 +36,27 @@ export default function SOSResponsesPage() {
       const alertResponses = allResponses.items.filter(r => r.sosAlertId === alertId && r.isAvailableToDonate);
       setResponses(alertResponses);
 
-      // Get donor details for each response
+      // Get donor/hospital details for each response
       const donorMap = new Map<string, PublicUsers>();
+      const hospitalMap = new Map<string, Hospitals>();
+      
       for (const response of alertResponses) {
         if (response.responderId) {
-          const donor = await BaseCrudService.getById<PublicUsers>('publicusers', response.responderId);
-          if (donor) {
-            donorMap.set(response.responderId, donor);
+          if (response.responderType === 'Donor') {
+            const donor = await BaseCrudService.getById<PublicUsers>('publicusers', response.responderId);
+            if (donor) {
+              donorMap.set(response.responderId, donor);
+            }
+          } else if (response.responderType === 'Hospital') {
+            const hospital = await BaseCrudService.getById<Hospitals>('hospitals', response.responderId);
+            if (hospital) {
+              hospitalMap.set(response.responderId, hospital);
+            }
           }
         }
       }
       setDonors(donorMap);
+      setHospitals(hospitalMap);
     }
 
     setIsLoading(false);
@@ -169,6 +180,8 @@ export default function SOSResponsesPage() {
               <div className="grid md:grid-cols-2 gap-6">
                 {responses.map((response, index) => {
                   const donor = donors.get(response.responderId || '');
+                  const hospital = hospitals.get(response.responderId || '');
+                  const isDonor = response.responderType === 'Donor';
                   
                   return (
                     <motion.div
@@ -181,13 +194,17 @@ export default function SOSResponsesPage() {
                         <CardHeader>
                           <CardTitle className="font-heading text-2xl text-secondary flex items-center gap-2">
                             <div className="bg-primary w-10 h-10 rounded-full flex items-center justify-center">
-                              <User className="w-5 h-5 text-primary-foreground" />
+                              {isDonor ? (
+                                <User className="w-5 h-5 text-primary-foreground" />
+                              ) : (
+                                <Building2 className="w-5 h-5 text-primary-foreground" />
+                              )}
                             </div>
-                            {donor?.fullName || 'Unknown Donor'}
+                            {isDonor ? donor?.fullName : hospital?.hospitalName || 'Unknown'}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          {donor && (
+                          {isDonor && donor && (
                             <>
                               <div className="flex items-center justify-between">
                                 <span className="font-paragraph text-sm text-secondary/70">Blood Group:</span>
@@ -210,6 +227,32 @@ export default function SOSResponsesPage() {
                                 <span className="font-paragraph text-sm text-secondary/70">
                                   Last Donation: {donor.lastDonationDate ? format(new Date(donor.lastDonationDate), 'dd MMM yyyy') : 'Never'}
                                 </span>
+                              </div>
+                            </>
+                          )}
+                          {!isDonor && hospital && (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <span className="font-paragraph text-sm text-secondary/70">Registration:</span>
+                                <span className="font-paragraph text-base text-secondary font-semibold">{hospital.registrationNumber}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="font-paragraph text-sm text-secondary/70">Type:</span>
+                                <span className="font-paragraph text-base text-secondary font-semibold">
+                                  {hospital.isBloodBank ? 'Blood Bank' : 'Hospital'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 pt-2 border-t border-secondary/10">
+                                <Phone className="w-4 h-4 text-primary" />
+                                <span className="font-paragraph text-base text-secondary font-semibold">{hospital.mobileNumber}</span>
+                              </div>
+                              <div>
+                                <p className="font-paragraph text-sm text-secondary/70 mb-1">Email:</p>
+                                <p className="font-paragraph text-base text-secondary">{hospital.email}</p>
+                              </div>
+                              <div>
+                                <p className="font-paragraph text-sm text-secondary/70 mb-1">Address:</p>
+                                <p className="font-paragraph text-base text-secondary">{hospital.address}</p>
                               </div>
                             </>
                           )}

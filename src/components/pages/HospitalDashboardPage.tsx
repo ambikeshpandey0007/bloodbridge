@@ -14,8 +14,10 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Building2, Droplet, AlertCircle, Calendar, Plus, Lock } from 'lucide-react';
 import { format } from 'date-fns';
+import { useMember } from '@/integrations';
 
 export default function HospitalDashboardPage() {
+  const { member, isAuthenticated, isLoading: isAuthLoading } = useMember();
   const [hospital, setHospital] = useState<Hospitals | null>(null);
   const [bloodStocks, setBloodStocks] = useState<BloodStock[]>([]);
   const [sosAlerts, setSosAlerts] = useState<SOSAlerts[]>([]);
@@ -58,6 +60,41 @@ export default function HospitalDashboardPage() {
 
     setIsLoading(false);
   };
+
+  // Check if user is authenticated
+  if (!isAuthLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <div className="max-w-[100rem] mx-auto px-8 py-16 min-h-[70vh]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <div className="bg-destructive w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-destructive-foreground" />
+            </div>
+            <h1 className="font-heading text-5xl md:text-6xl text-secondary mb-4">
+              Login Required
+            </h1>
+            <p className="font-paragraph text-xl text-secondary/80 mb-8">
+              Hospital Dashboard देखने के लिए पहले login करना होगा।
+            </p>
+            <Link to="/hospital-registration">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg px-8 py-6">
+                Hospital Registration करें
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+
+        <Footer />
+      </div>
+    );
+  }
 
   // Check if hospital profile exists
   if (!isLoading && !hospital) {
