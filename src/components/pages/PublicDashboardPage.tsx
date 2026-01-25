@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BaseCrudService } from '@/integrations';
 import { PublicUsers, DonationHistory, SOSAlerts, DonorBadges, AlertResponses } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { User, Heart, AlertCircle, Award, Calendar, Droplet } from 'lucide-react';
+import { User, Heart, AlertCircle, Award, Calendar, Droplet, Lock } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { format } from 'date-fns';
 
@@ -41,6 +42,41 @@ export default function PublicDashboardPage() {
 
     setIsLoading(false);
   };
+
+  // Check if user profile exists
+  if (!isLoading && !user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <div className="max-w-[100rem] mx-auto px-8 py-16 min-h-[70vh]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <div className="bg-destructive w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-destructive-foreground" />
+            </div>
+            <h1 className="font-heading text-5xl md:text-6xl text-secondary mb-4">
+              Dashboard Access Restricted
+            </h1>
+            <p className="font-paragraph text-xl text-secondary/80 mb-8">
+              Dashboard देखने के लिए पहले अपनी profile बनानी होगी।
+            </p>
+            <Link to="/public-registration">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg px-8 py-6">
+                Profile बनाएं
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+
+        <Footer />
+      </div>
+    );
+  }
 
   const handleRespondToAlert = async (alertId: string, canDonate: boolean) => {
     const response: AlertResponses = {

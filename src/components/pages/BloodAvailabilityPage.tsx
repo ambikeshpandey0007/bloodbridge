@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BaseCrudService } from '@/integrations';
 import { BloodStock } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Search, MapPin, Phone, Droplet } from 'lucide-react';
+import { Search, MapPin, Phone, Droplet, Lock } from 'lucide-react';
 
 export default function BloodAvailabilityPage() {
   const [bloodStocks, setBloodStocks] = useState<BloodStock[]>([]);
@@ -69,6 +70,14 @@ export default function BloodAvailabilityPage() {
               अपने area में available blood stock खोजें
             </p>
           </div>
+
+          {/* Read-Only Notice */}
+          <Alert className="mb-8 bg-pastellavender border-primary/30">
+            <Lock className="h-4 w-4 text-primary" />
+            <AlertDescription className="font-paragraph text-base text-secondary">
+              यह page केवल blood availability देखने के लिए है। कोई भी edit या update नहीं कर सकते।
+            </AlertDescription>
+          </Alert>
 
           {/* Search Filters */}
           <div className="bg-pastellavender p-8 rounded-2xl mb-12">

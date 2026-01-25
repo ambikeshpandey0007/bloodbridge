@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,11 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BaseCrudService } from '@/integrations';
 import { Hospitals, BloodStock, SOSAlerts, AlertResponses, DonationHistory } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Building2, Droplet, AlertCircle, Calendar, Plus } from 'lucide-react';
+import { Building2, Droplet, AlertCircle, Calendar, Plus, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function HospitalDashboardPage() {
@@ -57,61 +59,40 @@ export default function HospitalDashboardPage() {
     setIsLoading(false);
   };
 
-  const handleAddBloodStock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newStock: BloodStock = {
-      _id: crypto.randomUUID(),
-      hospitalName: hospital?.hospitalName || '',
-      bloodGroup: stockForm.bloodGroup,
-      availableUnits: parseInt(stockForm.availableUnits),
-      address: stockForm.address,
-      city: stockForm.city,
-      state: stockForm.state,
-      zipCode: stockForm.zipCode,
-      contactNumber: stockForm.contactNumber,
-    };
+  // Check if hospital profile exists
+  if (!isLoading && !hospital) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <div className="max-w-[100rem] mx-auto px-8 py-16 min-h-[70vh]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <div className="bg-destructive w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-destructive-foreground" />
+            </div>
+            <h1 className="font-heading text-5xl md:text-6xl text-secondary mb-4">
+              Dashboard Access Restricted
+            </h1>
+            <p className="font-paragraph text-xl text-secondary/80 mb-8">
+              Dashboard देखने के लिए पहले अपनी hospital profile बनानी होगी।
+            </p>
+            <Link to="/hospital-registration">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg px-8 py-6">
+                Hospital Profile बनाएं
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
 
-    await BaseCrudService.create('bloodstock', newStock);
-    
-    setStockForm({
-      bloodGroup: '',
-      availableUnits: '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      contactNumber: '',
-    });
-    
-    loadDashboardData();
-    alert('Blood stock successfully add किया गया!');
-  };
-
-  const handleRecordDonation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newDonation: DonationHistory = {
-      _id: crypto.randomUUID(),
-      donorName: donationForm.donorName,
-      hospitalName: hospital?.hospitalName || '',
-      donationDate: donationForm.donationDate,
-      unitsDonated: parseInt(donationForm.unitsDonated),
-      donationType: donationForm.donationType,
-      isSuccessful: true,
-    };
-
-    await BaseCrudService.create('donationhistory', newDonation);
-    
-    setDonationForm({
-      donorName: '',
-      donationDate: '',
-      unitsDonated: '',
-      donationType: '',
-    });
-    
-    alert('Donation successfully record किया गया!');
-  };
+        <Footer />
+      </div>
+    );
+  }
 
   const handleRespondToAlert = async (alertId: string, canProvide: boolean) => {
     const response: AlertResponses = {
@@ -143,7 +124,7 @@ export default function HospitalDashboardPage() {
               Hospital Dashboard
             </h1>
             <p className="font-paragraph text-xl text-secondary/80">
-              Blood stock manage करें और requests देखें
+              Blood stock और requests देखें
             </p>
           </div>
 
@@ -204,198 +185,71 @@ export default function HospitalDashboardPage() {
 
               {/* Tabs for different sections */}
               <Tabs defaultValue="stock" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-8">
+                <TabsList className="grid w-full grid-cols-2 mb-8">
                   <TabsTrigger value="stock" className="font-paragraph text-base">
                     Blood Stock
                   </TabsTrigger>
                   <TabsTrigger value="alerts" className="font-paragraph text-base">
                     SOS Alerts
                   </TabsTrigger>
-                  <TabsTrigger value="donation" className="font-paragraph text-base">
-                    Record Donation
-                  </TabsTrigger>
                 </TabsList>
 
                 {/* Blood Stock Tab */}
                 <TabsContent value="stock">
-                  <div className="grid lg:grid-cols-2 gap-8">
-                    {/* Add Blood Stock Form */}
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <Card className="bg-pastelbeige border-none">
-                        <CardHeader>
-                          <CardTitle className="font-heading text-2xl text-secondary flex items-center gap-3">
-                            <Plus className="w-6 h-6 text-primary" />
-                            Add Blood Stock
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <form onSubmit={handleAddBloodStock} className="space-y-4">
-                            <div>
-                              <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                                Blood Group *
-                              </Label>
-                              <Select
-                                value={stockForm.bloodGroup}
-                                onValueChange={(value) => setStockForm({ ...stockForm, bloodGroup: value })}
-                                required
+                  <Alert className="mb-8 bg-pastelpeach border-destructive/30">
+                    <Lock className="h-4 w-4 text-destructive" />
+                    <AlertDescription className="font-paragraph text-base text-secondary">
+                      Blood stock को edit या update नहीं कर सकते। केवल view कर सकते हैं।
+                    </AlertDescription>
+                  </Alert>
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <Card className="bg-pastellavender border-none">
+                      <CardHeader>
+                        <CardTitle className="font-heading text-2xl text-secondary flex items-center gap-3">
+                          <Droplet className="w-6 h-6 text-primary" />
+                          Current Stock
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {bloodStocks.length > 0 ? (
+                          <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                            {bloodStocks.map((stock) => (
+                              <div
+                                key={stock._id}
+                                className="bg-background p-4 rounded-lg"
                               >
-                                <SelectTrigger className="font-paragraph text-base">
-                                  <SelectValue placeholder="Blood group चुनें" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="A+">A+</SelectItem>
-                                  <SelectItem value="A-">A-</SelectItem>
-                                  <SelectItem value="B+">B+</SelectItem>
-                                  <SelectItem value="B-">B-</SelectItem>
-                                  <SelectItem value="AB+">AB+</SelectItem>
-                                  <SelectItem value="AB-">AB-</SelectItem>
-                                  <SelectItem value="O+">O+</SelectItem>
-                                  <SelectItem value="O-">O-</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div>
-                              <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                                Available Units *
-                              </Label>
-                              <Input
-                                type="number"
-                                required
-                                min="0"
-                                value={stockForm.availableUnits}
-                                onChange={(e) => setStockForm({ ...stockForm, availableUnits: e.target.value })}
-                                className="font-paragraph text-base"
-                              />
-                            </div>
-
-                            <div>
-                              <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                                Address *
-                              </Label>
-                              <Input
-                                type="text"
-                                required
-                                value={stockForm.address}
-                                onChange={(e) => setStockForm({ ...stockForm, address: e.target.value })}
-                                className="font-paragraph text-base"
-                              />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                                  City *
-                                </Label>
-                                <Input
-                                  type="text"
-                                  required
-                                  value={stockForm.city}
-                                  onChange={(e) => setStockForm({ ...stockForm, city: e.target.value })}
-                                  className="font-paragraph text-base"
-                                />
-                              </div>
-                              <div>
-                                <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                                  State *
-                                </Label>
-                                <Input
-                                  type="text"
-                                  required
-                                  value={stockForm.state}
-                                  onChange={(e) => setStockForm({ ...stockForm, state: e.target.value })}
-                                  className="font-paragraph text-base"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                                  Zip Code *
-                                </Label>
-                                <Input
-                                  type="text"
-                                  required
-                                  value={stockForm.zipCode}
-                                  onChange={(e) => setStockForm({ ...stockForm, zipCode: e.target.value })}
-                                  className="font-paragraph text-base"
-                                />
-                              </div>
-                              <div>
-                                <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                                  Contact Number *
-                                </Label>
-                                <Input
-                                  type="tel"
-                                  required
-                                  value={stockForm.contactNumber}
-                                  onChange={(e) => setStockForm({ ...stockForm, contactNumber: e.target.value })}
-                                  className="font-paragraph text-base"
-                                  pattern="[0-9]{10}"
-                                />
-                              </div>
-                            </div>
-
-                            <Button
-                              type="submit"
-                              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph"
-                            >
-                              Add Stock
-                            </Button>
-                          </form>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-
-                    {/* Current Blood Stocks */}
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <Card className="bg-pastellavender border-none">
-                        <CardHeader>
-                          <CardTitle className="font-heading text-2xl text-secondary flex items-center gap-3">
-                            <Droplet className="w-6 h-6 text-primary" />
-                            Current Stock
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          {bloodStocks.length > 0 ? (
-                            <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                              {bloodStocks.map((stock) => (
-                                <div
-                                  key={stock._id}
-                                  className="bg-background p-4 rounded-lg"
-                                >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="font-heading text-xl text-primary font-bold">
-                                      {stock.bloodGroup}
-                                    </span>
-                                    <span className="font-paragraph text-base text-secondary font-semibold">
-                                      {stock.availableUnits} units
-                                    </span>
-                                  </div>
-                                  <p className="font-paragraph text-sm text-secondary/70">
-                                    {stock.city}, {stock.state}
-                                  </p>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="font-heading text-xl text-primary font-bold">
+                                    {stock.bloodGroup}
+                                  </span>
+                                  <span className="font-paragraph text-base text-secondary font-semibold">
+                                    {stock.availableUnits} units
+                                  </span>
                                 </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="font-paragraph text-base text-secondary/70 text-center py-8">
-                              कोई blood stock नहीं है
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </div>
+                                <p className="font-paragraph text-sm text-secondary/70">
+                                  {stock.address}
+                                </p>
+                                <p className="font-paragraph text-sm text-secondary/70">
+                                  {stock.city}, {stock.state} - {stock.zipCode}
+                                </p>
+                                <p className="font-paragraph text-sm text-secondary/70 mt-1">
+                                  Contact: {stock.contactNumber}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="font-paragraph text-base text-secondary/70 text-center py-8">
+                            कोई blood stock नहीं है
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 </TabsContent>
 
                 {/* SOS Alerts Tab */}
@@ -469,97 +323,6 @@ export default function HospitalDashboardPage() {
                         </CardContent>
                       </Card>
                     )}
-                  </motion.div>
-                </TabsContent>
-
-                {/* Record Donation Tab */}
-                <TabsContent value="donation">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="max-w-2xl mx-auto"
-                  >
-                    <Card className="bg-pastelgreen border-none">
-                      <CardHeader>
-                        <CardTitle className="font-heading text-2xl text-secondary flex items-center gap-3">
-                          <Calendar className="w-6 h-6 text-primary" />
-                          Record Donation
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <form onSubmit={handleRecordDonation} className="space-y-4">
-                          <div>
-                            <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                              Donor का नाम *
-                            </Label>
-                            <Input
-                              type="text"
-                              required
-                              value={donationForm.donorName}
-                              onChange={(e) => setDonationForm({ ...donationForm, donorName: e.target.value })}
-                              className="font-paragraph text-base"
-                              placeholder="Donor का पूरा नाम"
-                            />
-                          </div>
-
-                          <div>
-                            <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                              Donation Date *
-                            </Label>
-                            <Input
-                              type="date"
-                              required
-                              value={donationForm.donationDate}
-                              onChange={(e) => setDonationForm({ ...donationForm, donationDate: e.target.value })}
-                              className="font-paragraph text-base"
-                            />
-                          </div>
-
-                          <div>
-                            <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                              Units Donated *
-                            </Label>
-                            <Input
-                              type="number"
-                              required
-                              min="1"
-                              value={donationForm.unitsDonated}
-                              onChange={(e) => setDonationForm({ ...donationForm, unitsDonated: e.target.value })}
-                              className="font-paragraph text-base"
-                            />
-                          </div>
-
-                          <div>
-                            <Label className="font-paragraph text-sm text-secondary mb-2 block">
-                              Donation Type *
-                            </Label>
-                            <Select
-                              value={donationForm.donationType}
-                              onValueChange={(value) => setDonationForm({ ...donationForm, donationType: value })}
-                              required
-                            >
-                              <SelectTrigger className="font-paragraph text-base">
-                                <SelectValue placeholder="Type चुनें" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Whole Blood">Whole Blood</SelectItem>
-                                <SelectItem value="Plasma">Plasma</SelectItem>
-                                <SelectItem value="Platelets">Platelets</SelectItem>
-                                <SelectItem value="Red Blood Cells">Red Blood Cells</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <Button
-                            type="submit"
-                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph"
-                          >
-                            Record Donation
-                          </Button>
-                        </form>
-                      </CardContent>
-                    </Card>
                   </motion.div>
                 </TabsContent>
               </Tabs>
