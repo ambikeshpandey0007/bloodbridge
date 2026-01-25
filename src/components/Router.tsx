@@ -9,6 +9,7 @@ import PublicDashboardPage from '@/components/pages/PublicDashboardPage';
 import HospitalDashboardPage from '@/components/pages/HospitalDashboardPage';
 import BloodAvailabilityPage from '@/components/pages/BloodAvailabilityPage';
 import SOSAlertPage from '@/components/pages/SOSAlertPage';
+import SOSResponsesPage from '@/components/pages/SOSResponsesPage';
 
 // Layout component that includes ScrollToTop
 function Layout() {
@@ -56,6 +57,10 @@ const router = createBrowserRouter([
       {
         path: "sos-alert",
         element: <SOSAlertPage />,
+      },
+      {
+        path: "sos-responses/:alertId",
+        element: <SOSResponsesPage />,
       },
       {
         path: "*",

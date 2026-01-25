@@ -90,7 +90,46 @@ export default function PublicDashboardPage() {
     };
 
     await BaseCrudService.create('alertresponses', response);
-    alert('Response successfully भेजा गया!');
+
+    // If donor can donate, update the SOS alert and create donation history
+    if (canDonate && user) {
+      const alert = sosAlerts.find(a => a._id === alertId);
+      if (alert) {
+        // Get default donation units (1 unit) - user can donate
+        const donationUnits = 1;
+
+        // Update SOS alert - decrease units needed
+        const updatedUnitsNeeded = Math.max(0, (alert.unitsNeeded || 0) - donationUnits);
+        await BaseCrudService.update('sosalerts', {
+          _id: alertId,
+          unitsNeeded: updatedUnitsNeeded,
+          requestStatus: updatedUnitsNeeded === 0 ? 'Completed' : 'Active',
+        });
+
+        // Create donation history record
+        const donationRecord = {
+          _id: crypto.randomUUID(),
+          donorName: user.fullName,
+          hospitalName: alert.location,
+          donationDate: new Date().toISOString(),
+          unitsDonated: donationUnits,
+          donationType: alert.bloodGroupRequired,
+          isSuccessful: true,
+        };
+        await BaseCrudService.create('donationhistory', donationRecord);
+
+        // Update user's total donations
+        await BaseCrudService.update('publicusers', {
+          _id: user._id,
+          totalDonations: (user.totalDonations || 0) + donationUnits,
+          lastDonationDate: new Date().toISOString(),
+        });
+
+        alert(`✅ आपका response भेजा गया!\n\n📋 Donor की Details:\nनाम: ${user.fullName}\nBlood Group: ${user.bloodGroup}\nMobile: ${user.mobileNumber}\n\n🩸 Blood Units: ${updatedUnitsNeeded} units बाकी हैं`);
+      }
+    } else {
+      alert('Response successfully भेजा गया!');
+    }
     loadDashboardData();
   };
 
@@ -324,6 +363,14 @@ export default function PublicDashboardPage() {
                               >
                                 नहीं कर सकता
                               </Button>
+                              <Link to={`/sos-responses/${alert._id}`}>
+                                <Button
+                                  variant="outline"
+                                  className="border-secondary text-secondary hover:bg-secondary/10 font-paragraph"
+                                >
+                                  देखें
+                                </Button>
+                              </Link>
                             </div>
                           </CardContent>
                         </Card>
