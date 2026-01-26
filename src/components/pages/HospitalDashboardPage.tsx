@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +14,11 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Building2, Droplet, AlertCircle, Calendar, Plus, Lock, Edit2, Save, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAuthStore } from '@/store/authStore';
 
 export default function HospitalDashboardPage() {
+  const navigate = useNavigate();
+  const { userType } = useAuthStore();
   const [hospital, setHospital] = useState<Hospitals | null>(null);
   const [bloodStocks, setBloodStocks] = useState<BloodStock[]>([]);
   const [sosAlerts, setSosAlerts] = useState<SOSAlerts[]>([]);
@@ -32,8 +35,13 @@ export default function HospitalDashboardPage() {
   });
 
   useEffect(() => {
+    // Redirect if user is not logged in as hospital user
+    if (userType !== 'hospital') {
+      navigate('/');
+      return;
+    }
     loadDashboardData();
-  }, []);
+  }, [userType, navigate]);
 
   const loadDashboardData = async () => {
     setIsLoading(true);

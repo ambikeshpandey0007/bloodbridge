@@ -10,9 +10,11 @@ import { Hospitals } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Building2 } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 export default function HospitalRegistrationPage() {
   const navigate = useNavigate();
+  const { setUserType } = useAuthStore();
   const [formData, setFormData] = useState({
     hospitalName: '',
     registrationNumber: '',
@@ -38,6 +40,7 @@ export default function HospitalRegistrationPage() {
     };
 
     await BaseCrudService.create('hospitals', newHospital);
+    setUserType('hospital', newHospital._id);
     navigate('/hospital-dashboard');
   };
 

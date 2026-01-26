@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +11,11 @@ import Footer from '@/components/Footer';
 import { User, Heart, AlertCircle, Award, Calendar, Droplet, Lock } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { format } from 'date-fns';
+import { useAuthStore } from '@/store/authStore';
 
 export default function PublicDashboardPage() {
+  const navigate = useNavigate();
+  const { userType } = useAuthStore();
   const [user, setUser] = useState<PublicUsers | null>(null);
   const [donationHistory, setDonationHistory] = useState<DonationHistory[]>([]);
   const [sosAlerts, setSosAlerts] = useState<SOSAlerts[]>([]);
@@ -20,8 +23,13 @@ export default function PublicDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Redirect if user is not logged in as public user
+    if (userType !== 'public') {
+      navigate('/');
+      return;
+    }
     loadDashboardData();
-  }, []);
+  }, [userType, navigate]);
 
   const loadDashboardData = async () => {
     setIsLoading(true);

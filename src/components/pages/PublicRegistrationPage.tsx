@@ -10,9 +10,11 @@ import { PublicUsers } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { UserPlus } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 export default function PublicRegistrationPage() {
   const navigate = useNavigate();
+  const { setUserType } = useAuthStore();
   const [formData, setFormData] = useState({
     fullName: '',
     mobileNumber: '',
@@ -35,6 +37,7 @@ export default function PublicRegistrationPage() {
     };
 
     await BaseCrudService.create('publicusers', newUser);
+    setUserType('public', newUser._id);
     navigate('/public-dashboard');
   };
 
