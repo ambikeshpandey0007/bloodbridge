@@ -105,6 +105,12 @@ export interface Hospitals {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
+  /** @wixFieldType boolean */
+  isVerified?: boolean;
+  /** @wixFieldType date */
+  verificationDate?: Date | string;
+  /** @wixFieldType text */
+  verificationDetails?: string;
   /** @wixFieldType text */
   hospitalName?: string;
   /** @wixFieldType text */

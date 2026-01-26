@@ -9,8 +9,9 @@ import { BaseCrudService } from '@/integrations';
 import { Hospitals } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Building2 } from 'lucide-react';
+import { Building2, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function HospitalRegistrationPage() {
   const navigate = useNavigate();
@@ -37,6 +38,8 @@ export default function HospitalRegistrationPage() {
       address: formData.address,
       contactPerson: formData.contactPerson,
       isBloodBank: formData.isBloodBank,
+      isVerified: false,
+      verificationDetails: 'Pending government approval verification',
     };
 
     await BaseCrudService.create('hospitals', newHospital);
@@ -68,6 +71,13 @@ export default function HospitalRegistrationPage() {
           </div>
 
           <div className="bg-pastelgreen p-10 rounded-2xl">
+            <Alert className="mb-6 border-destructive bg-destructive/10">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <AlertDescription className="text-destructive font-paragraph">
+                केवल सरकार द्वारा अनुमोदित Hospital और Blood Bank ही register कर सकते हैं। आपका registration सत्यापन के लिए जमा किया जाएगा।
+              </AlertDescription>
+            </Alert>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <Label htmlFor="hospitalName" className="font-paragraph text-base text-secondary mb-2 block">
@@ -86,7 +96,7 @@ export default function HospitalRegistrationPage() {
 
               <div>
                 <Label htmlFor="registrationNumber" className="font-paragraph text-base text-secondary mb-2 block">
-                  Registration Number *
+                  Government Registration Number *
                 </Label>
                 <Input
                   id="registrationNumber"
@@ -95,7 +105,7 @@ export default function HospitalRegistrationPage() {
                   value={formData.registrationNumber}
                   onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
                   className="font-paragraph text-base"
-                  placeholder="Government authorized registration number"
+                  placeholder="सरकार द्वारा जारी registration number"
                 />
               </div>
 
@@ -185,6 +195,9 @@ export default function HospitalRegistrationPage() {
             <div className="mt-6 text-center">
               <p className="font-paragraph text-sm text-secondary/70">
                 * सभी fields अनिवार्य हैं
+              </p>
+              <p className="font-paragraph text-xs text-secondary/60 mt-2">
+                आपका registration सत्यापन के बाद ही सक्रिय होगा
               </p>
             </div>
           </div>

@@ -12,7 +12,7 @@ import { BaseCrudService } from '@/integrations';
 import { Hospitals, BloodStock, SOSAlerts, AlertResponses, DonationHistory, PublicUsers } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Building2, Droplet, AlertCircle, Calendar, Plus, Lock, Edit2, Save, X } from 'lucide-react';
+import { Building2, Droplet, AlertCircle, Calendar, Plus, Lock, Edit2, Save, X, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 
@@ -205,6 +205,24 @@ export default function HospitalDashboardPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
+                      {!hospital.isVerified && (
+                        <Alert className="mb-6 border-destructive bg-destructive/10">
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                          <AlertDescription className="text-destructive font-paragraph">
+                            ⚠️ आपका Hospital अभी सत्यापन के लिए लंबित है। सत्यापन के बाद ही आप सभी features का उपयोग कर सकेंगे।
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      {hospital.isVerified && (
+                        <Alert className="mb-6 border-primary bg-primary/10">
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                          <AlertDescription className="text-primary font-paragraph">
+                            ✅ आपका Hospital सत्यापित है और सभी features सक्रिय हैं।
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div>
                           <p className="font-paragraph text-sm text-secondary/70 mb-1">Registration Number</p>
@@ -232,6 +250,20 @@ export default function HospitalDashboardPage() {
                           <p className="font-paragraph text-sm text-secondary/70 mb-1">Type</p>
                           <p className="font-paragraph text-base text-secondary font-semibold">
                             {hospital.isBloodBank ? 'Blood Bank' : 'Hospital'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-sm text-secondary/70 mb-1">Verification Status</p>
+                          <p className="font-paragraph text-base font-semibold">
+                            {hospital.isVerified ? (
+                              <span className="text-primary flex items-center gap-1">
+                                <CheckCircle2 className="w-4 h-4" /> Verified
+                              </span>
+                            ) : (
+                              <span className="text-destructive flex items-center gap-1">
+                                <AlertCircle className="w-4 h-4" /> Pending
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
