@@ -21,6 +21,7 @@ export default function PublicDashboardPage() {
   const [sosAlerts, setSosAlerts] = useState<SOSAlerts[]>([]);
   const [badges, setBadges] = useState<DonorBadges[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [respondedAlerts, setRespondedAlerts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Redirect if user is not logged in as public user
@@ -47,6 +48,11 @@ export default function PublicDashboardPage() {
 
     const badgesResult = await BaseCrudService.getAll<DonorBadges>('donorbadges');
     setBadges(badgesResult.items);
+
+    // Load responded alerts to show which ones the user has already responded to
+    const responsesResult = await BaseCrudService.getAll<AlertResponses>('alertresponses');
+    const userResponses = responsesResult.items.filter(r => r.responderId === user?._id);
+    setRespondedAlerts(new Set(userResponses.map(r => r.sosAlertId || '')));
 
     setIsLoading(false);
   };
@@ -115,6 +121,9 @@ export default function PublicDashboardPage() {
     };
 
     await BaseCrudService.create('alertresponses', response);
+
+    // Update responded alerts state immediately for visual feedback
+    setRespondedAlerts(prev => new Set([...prev, alertId]));
 
     // If donor can donate, update the SOS alert and create donation history
     if (canDonate && user) {
@@ -379,10 +388,16 @@ export default function PublicDashboardPage() {
                               <Button
                                 onClick={() => handleRespondToAlert(alert._id, true)}
                                 disabled={user && user.age && user.age < 21}
-                                className={`flex-1 font-paragraph ${user && user.age && user.age < 21 ? 'opacity-50 cursor-not-allowed' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}
+                                className={`flex-1 font-paragraph transition-all duration-300 ${
+                                  respondedAlerts.has(alert._id)
+                                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                                    : user && user.age && user.age < 21
+                                    ? 'opacity-50 cursor-not-allowed bg-destructive text-destructive-foreground'
+                                    : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+                                }`}
                               >
                                 <Heart className="w-4 h-4 mr-2" />
-                                Donate करूँगा
+                                {respondedAlerts.has(alert._id) ? '✅ Response दिया' : 'Donate करूँगा'}
                               </Button>
                               <Button
                                 onClick={() => handleRespondToAlert(alert._id, false)}
