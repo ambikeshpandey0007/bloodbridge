@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -14,11 +14,40 @@ import { useAuthStore } from '@/store/authStore';
 export default function PublicLoginPage() {
   const navigate = useNavigate();
   const { setUserType } = useAuthStore();
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [mobileNumber, setMobileNumber] = useState('');
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [userId, setUserId] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (step === 'otp' && timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [step, timeLeft]);
+
+  const generateOtp = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -34,25 +63,74 @@ export default function PublicLoginPage() {
         return;
       }
 
-      // Generate OTP (in real app, this would be sent via SMS)
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      // Generate OTP
+      const generatedOtp = generateOtp();
       
-      // Store OTP temporarily in sessionStorage
-      sessionStorage.setItem('otp', otp);
-      sessionStorage.setItem('otpUserId', user._id);
-      sessionStorage.setItem('otpMobileNumber', mobileNumber);
+      // Store OTP temporarily
+      sessionStorage.setItem('loginOtp', generatedOtp);
+      sessionStorage.setItem('loginUserId', user._id);
+      sessionStorage.setItem('loginMobileNumber', mobileNumber);
       
       // For demo purposes, show OTP in console
-      console.log('OTP for testing:', otp);
+      console.log('Login OTP for testing:', generatedOtp);
       
-      // Navigate to OTP verification page
-      navigate('/public-login-otp');
+      // Move to OTP verification step
+      setUserId(user._id);
+      setStep('otp');
+      setTimeLeft(300); // 5 minutes
     } catch (err) {
       setError('कुछ गलती हुई। कृपया फिर से कोशिश करें।');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const storedOtp = sessionStorage.getItem('loginOtp');
+
+      if (timeLeft === 0) {
+        setError('OTP की validity समाप्त हो गई है। फिर से login करें।');
+        setIsLoading(false);
+        return;
+      }
+
+      if (otp !== storedOtp) {
+        setError('गलत OTP। कृपया फिर से कोशिश करें।');
+        setIsLoading(false);
+        return;
+      }
+
+      // OTP verified successfully
+      setUserType('public', userId);
+      
+      // Clear session storage
+      sessionStorage.removeItem('loginOtp');
+      sessionStorage.removeItem('loginUserId');
+      sessionStorage.removeItem('loginMobileNumber');
+
+      // Navigate to dashboard
+      navigate('/public-dashboard');
+    } catch (err) {
+      setError('कुछ गलती हुई। कृपया फिर से कोशिश करें।');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = () => {
+    const generatedOtp = generateOtp();
+    sessionStorage.setItem('loginOtp', generatedOtp);
+    console.log('New Login OTP for testing:', generatedOtp);
+    setTimeLeft(300);
+    setOtp('');
+    setError('');
   };
 
   return (
@@ -74,66 +152,147 @@ export default function PublicLoginPage() {
               Public Login
             </h1>
             <p className="font-paragraph text-xl text-secondary/80">
-              अपने phone number से login करें
+              {step === 'phone' ? 'अपने phone number से login करें' : 'अपने mobile number पर भेजा गया OTP दर्ज करें'}
             </p>
           </div>
 
           <div className="bg-pastelbeige p-10 rounded-2xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-destructive/10 border border-destructive rounded-lg p-4 flex items-start gap-3"
-                >
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                  <p className="font-paragraph text-sm text-destructive">{error}</p>
-                </motion.div>
+            {step === 'phone' ? (
+              <form onSubmit={handlePhoneSubmit} className="space-y-6">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-destructive/10 border border-destructive rounded-lg p-4 flex items-start gap-3"
+                  >
+                    <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <p className="font-paragraph text-sm text-destructive">{error}</p>
+                  </motion.div>
+                )}
+
+                <div>
+                  <Label htmlFor="mobileNumber" className="font-paragraph text-base text-secondary mb-2 block">
+                    Mobile Number *
+                  </Label>
+                  <Input
+                    id="mobileNumber"
+                    type="tel"
+                    required
+                    value={mobileNumber}
+                    onChange={(e) => setMobileNumber(e.target.value)}
+                    className="font-paragraph text-base"
+                    placeholder="10 अंकों का mobile number"
+                    pattern="[0-9]{10}"
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-secondary/60 mt-2">
+                    आपको एक OTP प्राप्त होगा इस number पर
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={isLoading}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg disabled:opacity-50"
+                  >
+                    {isLoading ? 'Processing...' : 'OTP भेजें'}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleOtpSubmit} className="space-y-6">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-destructive/10 border border-destructive rounded-lg p-4 flex items-start gap-3"
+                  >
+                    <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <p className="font-paragraph text-sm text-destructive">{error}</p>
+                  </motion.div>
+                )}
+
+                <div>
+                  <Label htmlFor="otp" className="font-paragraph text-base text-secondary mb-2 block">
+                    6-Digit OTP *
+                  </Label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    required
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="font-paragraph text-base text-center text-2xl tracking-widest"
+                    placeholder="000000"
+                    maxLength={6}
+                    disabled={isLoading || timeLeft === 0}
+                  />
+                  <p className="text-xs text-secondary/60 mt-2">
+                    OTP की validity: {formatTime(timeLeft)}
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={isLoading || timeLeft === 0 || otp.length !== 6}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg disabled:opacity-50"
+                  >
+                    {isLoading ? 'Verifying...' : 'Verify OTP'}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            <div className="mt-8 space-y-4 border-t border-secondary/20 pt-6">
+              {step === 'phone' ? (
+                <>
+                  <p className="font-paragraph text-sm text-secondary/70 text-center mb-4">
+                    अभी registered नहीं हैं?
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/public-registration')}
+                    className="w-full border-primary text-primary hover:bg-primary/10"
+                  >
+                    अभी Register करें
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="text-center">
+                    <p className="font-paragraph text-sm text-secondary/70 mb-3">
+                      OTP नहीं मिला?
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleResendOtp}
+                      disabled={isLoading}
+                      className="w-full border-primary text-primary hover:bg-primary/10"
+                    >
+                      OTP फिर से भेजें
+                    </Button>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setStep('phone');
+                      setError('');
+                      setOtp('');
+                      setMobileNumber('');
+                    }}
+                    className="w-full text-secondary/70 hover:text-secondary"
+                  >
+                    वापस जाएं
+                  </Button>
+                </>
               )}
-
-              <div>
-                <Label htmlFor="mobileNumber" className="font-paragraph text-base text-secondary mb-2 block">
-                  Mobile Number *
-                </Label>
-                <Input
-                  id="mobileNumber"
-                  type="tel"
-                  required
-                  value={mobileNumber}
-                  onChange={(e) => setMobileNumber(e.target.value)}
-                  className="font-paragraph text-base"
-                  placeholder="10 अंकों का mobile number"
-                  pattern="[0-9]{10}"
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-secondary/60 mt-2">
-                  आपको एक OTP प्राप्त होगा इस number पर
-                </p>
-              </div>
-
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isLoading}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg disabled:opacity-50"
-                >
-                  {isLoading ? 'Processing...' : 'OTP भेजें'}
-                </Button>
-              </div>
-            </form>
-
-            <div className="mt-8 text-center border-t border-secondary/20 pt-6">
-              <p className="font-paragraph text-sm text-secondary/70 mb-4">
-                अभी registered नहीं हैं?
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => navigate('/public-registration')}
-                className="w-full border-primary text-primary hover:bg-primary/10"
-              >
-                अभी Register करें
-              </Button>
             </div>
 
             <div className="mt-6 text-center">

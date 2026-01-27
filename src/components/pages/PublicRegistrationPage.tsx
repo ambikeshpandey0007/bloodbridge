@@ -9,12 +9,13 @@ import { BaseCrudService } from '@/integrations';
 import { PublicUsers } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 export default function PublicRegistrationPage() {
   const navigate = useNavigate();
   const { setUserType } = useAuthStore();
+  const [step, setStep] = useState<'form' | 'otp'>('form');
   const [formData, setFormData] = useState({
     fullName: '',
     mobileNumber: '',
@@ -22,23 +23,134 @@ export default function PublicRegistrationPage() {
     bloodGroup: '',
     age: '',
   });
+  const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const generateOtp = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const newUser: PublicUsers = {
-      _id: crypto.randomUUID(),
-      fullName: formData.fullName,
-      mobileNumber: formData.mobileNumber,
-      aadharNumber: formData.aadharNumber,
-      bloodGroup: formData.bloodGroup,
-      age: parseInt(formData.age),
-      totalDonations: 0,
-    };
+    setError('');
+    setIsLoading(true);
 
-    await BaseCrudService.create('publicusers', newUser);
-    setUserType('public', newUser._id);
-    navigate('/public-dashboard');
+    try {
+      // Check if mobile number already exists
+      const result = await BaseCrudService.getAll<PublicUsers>('publicusers');
+      const existingUser = result.items.find(u => u.mobileNumber === formData.mobileNumber);
+      
+      if (existingUser) {
+        setError('यह mobile number पहले से registered है।');
+        setIsLoading(false);
+        return;
+      }
+
+      // Generate OTP
+      const generatedOtp = generateOtp();
+      
+      // Store registration data and OTP temporarily
+      sessionStorage.setItem('registrationOtp', generatedOtp);
+      sessionStorage.setItem('registrationData', JSON.stringify(formData));
+      sessionStorage.setItem('registrationOtpTime', Date.now().toString());
+      
+      // For demo: show OTP in console
+      console.log('Registration OTP for testing:', generatedOtp);
+      
+      // Move to OTP verification step
+      setStep('otp');
+      setTimeLeft(300); // 5 minutes
+      
+      // Start timer
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      setError('कुछ गलती हुई। कृपया फिर से कोशिश करें।');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const storedOtp = sessionStorage.getItem('registrationOtp');
+      const registrationDataStr = sessionStorage.getItem('registrationData');
+
+      if (timeLeft === 0) {
+        setError('OTP की validity समाप्त हो गई है। फिर से registration करें।');
+        setIsLoading(false);
+        return;
+      }
+
+      if (otp !== storedOtp) {
+        setError('गलत OTP। कृपया फिर से कोशिश करें।');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!registrationDataStr) {
+        setError('Registration data खो गया। फिर से कोशिश करें।');
+        setIsLoading(false);
+        return;
+      }
+
+      // OTP verified - create user
+      const registrationData = JSON.parse(registrationDataStr);
+      const newUser: PublicUsers = {
+        _id: crypto.randomUUID(),
+        fullName: registrationData.fullName,
+        mobileNumber: registrationData.mobileNumber,
+        aadharNumber: registrationData.aadharNumber,
+        bloodGroup: registrationData.bloodGroup,
+        age: parseInt(registrationData.age),
+        totalDonations: 0,
+      };
+
+      await BaseCrudService.create('publicusers', newUser);
+      
+      // Clear session storage
+      sessionStorage.removeItem('registrationOtp');
+      sessionStorage.removeItem('registrationData');
+      sessionStorage.removeItem('registrationOtpTime');
+
+      setUserType('public', newUser._id);
+      navigate('/public-dashboard');
+    } catch (err) {
+      setError('कुछ गलती हुई। कृपया फिर से कोशिश करें।');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = () => {
+    const generatedOtp = generateOtp();
+    sessionStorage.setItem('registrationOtp', generatedOtp);
+    sessionStorage.setItem('registrationOtpTime', Date.now().toString());
+    console.log('New Registration OTP for testing:', generatedOtp);
+    setTimeLeft(300);
+    setOtp('');
+    setError('');
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -60,115 +172,214 @@ export default function PublicRegistrationPage() {
               Public Registration
             </h1>
             <p className="font-paragraph text-xl text-secondary/80">
-              Donor या Receiver के रूप में register करें
+              {step === 'form' ? 'Donor या Receiver के रूप में register करें' : 'अपने mobile number पर भेजा गया OTP दर्ज करें'}
             </p>
           </div>
 
           <div className="bg-pastelbeige p-10 rounded-2xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label htmlFor="fullName" className="font-paragraph text-base text-secondary mb-2 block">
-                  पूरा नाम *
-                </Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  required
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="font-paragraph text-base"
-                  placeholder="अपना पूरा नाम दर्ज करें"
-                />
-              </div>
+            {step === 'form' ? (
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-destructive/10 border border-destructive rounded-lg p-4 flex items-start gap-3"
+                  >
+                    <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <p className="font-paragraph text-sm text-destructive">{error}</p>
+                  </motion.div>
+                )}
 
-              <div>
-                <Label htmlFor="mobileNumber" className="font-paragraph text-base text-secondary mb-2 block">
-                  Mobile Number *
-                </Label>
-                <Input
-                  id="mobileNumber"
-                  type="tel"
-                  required
-                  value={formData.mobileNumber}
-                  onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-                  className="font-paragraph text-base"
-                  placeholder="10 अंकों का mobile number"
-                  pattern="[0-9]{10}"
-                />
-              </div>
+                <div>
+                  <Label htmlFor="fullName" className="font-paragraph text-base text-secondary mb-2 block">
+                    पूरा नाम *
+                  </Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    className="font-paragraph text-base"
+                    placeholder="अपना पूरा नाम दर्ज करें"
+                    disabled={isLoading}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="aadharNumber" className="font-paragraph text-base text-secondary mb-2 block">
-                  Aadhar Number *
-                </Label>
-                <Input
-                  id="aadharNumber"
-                  type="text"
-                  required
-                  value={formData.aadharNumber}
-                  onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
-                  className="font-paragraph text-base"
-                  placeholder="12 अंकों का Aadhar number"
-                  pattern="[0-9]{12}"
-                />
-              </div>
+                <div>
+                  <Label htmlFor="mobileNumber" className="font-paragraph text-base text-secondary mb-2 block">
+                    Mobile Number *
+                  </Label>
+                  <Input
+                    id="mobileNumber"
+                    type="tel"
+                    required
+                    value={formData.mobileNumber}
+                    onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
+                    className="font-paragraph text-base"
+                    placeholder="10 अंकों का mobile number"
+                    pattern="[0-9]{10}"
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-secondary/60 mt-2">
+                    आपको एक OTP प्राप्त होगा इस number पर
+                  </p>
+                </div>
 
-              <div>
-                <Label htmlFor="bloodGroup" className="font-paragraph text-base text-secondary mb-2 block">
-                  Blood Group *
-                </Label>
-                <Select
-                  value={formData.bloodGroup}
-                  onValueChange={(value) => setFormData({ ...formData, bloodGroup: value })}
-                  required
-                >
-                  <SelectTrigger className="font-paragraph text-base">
-                    <SelectValue placeholder="अपना blood group चुनें" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A+">A+</SelectItem>
-                    <SelectItem value="A-">A-</SelectItem>
-                    <SelectItem value="B+">B+</SelectItem>
-                    <SelectItem value="B-">B-</SelectItem>
-                    <SelectItem value="AB+">AB+</SelectItem>
-                    <SelectItem value="AB-">AB-</SelectItem>
-                    <SelectItem value="O+">O+</SelectItem>
-                    <SelectItem value="O-">O-</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label htmlFor="aadharNumber" className="font-paragraph text-base text-secondary mb-2 block">
+                    Aadhar Number *
+                  </Label>
+                  <Input
+                    id="aadharNumber"
+                    type="text"
+                    required
+                    value={formData.aadharNumber}
+                    onChange={(e) => setFormData({ ...formData, aadharNumber: e.target.value })}
+                    className="font-paragraph text-base"
+                    placeholder="12 अंकों का Aadhar number"
+                    pattern="[0-9]{12}"
+                    disabled={isLoading}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="age" className="font-paragraph text-base text-secondary mb-2 block">
-                  उम्र *
-                </Label>
-                <Input
-                  id="age"
-                  type="number"
-                  required
-                  min="18"
-                  max="65"
-                  value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                  className="font-paragraph text-base"
-                  placeholder="आपकी उम्र"
-                />
-              </div>
+                <div>
+                  <Label htmlFor="bloodGroup" className="font-paragraph text-base text-secondary mb-2 block">
+                    Blood Group *
+                  </Label>
+                  <Select
+                    value={formData.bloodGroup}
+                    onValueChange={(value) => setFormData({ ...formData, bloodGroup: value })}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="font-paragraph text-base">
+                      <SelectValue placeholder="अपना blood group चुनें" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A+">A+</SelectItem>
+                      <SelectItem value="A-">A-</SelectItem>
+                      <SelectItem value="B+">B+</SelectItem>
+                      <SelectItem value="B-">B-</SelectItem>
+                      <SelectItem value="AB+">AB+</SelectItem>
+                      <SelectItem value="AB-">AB-</SelectItem>
+                      <SelectItem value="O+">O+</SelectItem>
+                      <SelectItem value="O-">O-</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg"
-                >
-                  Register करें
-                </Button>
-              </div>
-            </form>
+                <div>
+                  <Label htmlFor="age" className="font-paragraph text-base text-secondary mb-2 block">
+                    उम्र *
+                  </Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    required
+                    min="18"
+                    max="65"
+                    value={formData.age}
+                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                    className="font-paragraph text-base"
+                    placeholder="आपकी उम्र"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={isLoading}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg disabled:opacity-50"
+                  >
+                    {isLoading ? 'Processing...' : 'OTP भेजें'}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleOtpSubmit} className="space-y-6">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-destructive/10 border border-destructive rounded-lg p-4 flex items-start gap-3"
+                  >
+                    <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <p className="font-paragraph text-sm text-destructive">{error}</p>
+                  </motion.div>
+                )}
+
+                <div>
+                  <Label htmlFor="otp" className="font-paragraph text-base text-secondary mb-2 block">
+                    6-Digit OTP *
+                  </Label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    required
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="font-paragraph text-base text-center text-2xl tracking-widest"
+                    placeholder="000000"
+                    maxLength={6}
+                    disabled={isLoading || timeLeft === 0}
+                  />
+                  <p className="text-xs text-secondary/60 mt-2">
+                    OTP की validity: {formatTime(timeLeft)}
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={isLoading || timeLeft === 0 || otp.length !== 6}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg disabled:opacity-50"
+                  >
+                    {isLoading ? 'Verifying...' : 'Verify OTP'}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            <div className="mt-8 space-y-4 border-t border-secondary/20 pt-6">
+              {step === 'otp' && (
+                <>
+                  <div className="text-center">
+                    <p className="font-paragraph text-sm text-secondary/70 mb-3">
+                      OTP नहीं मिला?
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleResendOtp}
+                      disabled={isLoading}
+                      className="w-full border-primary text-primary hover:bg-primary/10"
+                    >
+                      OTP फिर से भेजें
+                    </Button>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setStep('form');
+                      setError('');
+                      setOtp('');
+                    }}
+                    className="w-full text-secondary/70 hover:text-secondary"
+                  >
+                    वापस जाएं
+                  </Button>
+                </>
+              )}
+            </div>
 
             <div className="mt-6 text-center">
-              <p className="font-paragraph text-sm text-secondary/70">
-                * सभी fields अनिवार्य हैं
+              <p className="font-paragraph text-xs text-secondary/60">
+                Demo के लिए: OTP console में दिखेगा (F12 खोलें)
               </p>
             </div>
           </div>
