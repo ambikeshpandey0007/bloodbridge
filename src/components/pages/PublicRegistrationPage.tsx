@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { BaseCrudService } from '@/integrations';
 import { PublicUsers } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { UserPlus, AlertCircle } from 'lucide-react';
+import { UserPlus, AlertCircle, CheckCircle, Copy, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 export default function PublicRegistrationPage() {
@@ -27,9 +27,18 @@ export default function PublicRegistrationPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [showOtpPopup, setShowOtpPopup] = useState(false);
+  const [copiedOtp, setCopiedOtp] = useState(false);
 
   const generateOtp = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const copyOtpToClipboard = () => {
+    navigator.clipboard.writeText(generatedOtp);
+    setCopiedOtp(true);
+    setTimeout(() => setCopiedOtp(false), 2000);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -40,24 +49,37 @@ export default function PublicRegistrationPage() {
     try {
       // Check if mobile number already exists
       const result = await BaseCrudService.getAll<PublicUsers>('publicusers');
-      const existingUser = result.items.find(u => u.mobileNumber === formData.mobileNumber);
+      const existingUserByMobile = result.items.find(u => u.mobileNumber === formData.mobileNumber);
       
-      if (existingUser) {
+      if (existingUserByMobile) {
         setError('यह mobile number पहले से registered है।');
         setIsLoading(false);
         return;
       }
 
+      // Check if Aadhar number already exists
+      const existingUserByAadhar = result.items.find(u => u.aadharNumber === formData.aadharNumber);
+      
+      if (existingUserByAadhar) {
+        setError('यह Aadhar number पहले से registered है।');
+        setIsLoading(false);
+        return;
+      }
+
       // Generate OTP
-      const generatedOtp = generateOtp();
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOtp(newOtp);
       
       // Store registration data and OTP temporarily
-      sessionStorage.setItem('registrationOtp', generatedOtp);
+      sessionStorage.setItem('registrationOtp', newOtp);
       sessionStorage.setItem('registrationData', JSON.stringify(formData));
       sessionStorage.setItem('registrationOtpTime', Date.now().toString());
       
       // For demo: show OTP in console
-      console.log('Registration OTP for testing:', generatedOtp);
+      console.log('Registration OTP for testing:', newOtp);
+      
+      // Show OTP popup
+      setShowOtpPopup(true);
       
       // Move to OTP verification step
       setStep('otp');
@@ -138,10 +160,13 @@ export default function PublicRegistrationPage() {
   };
 
   const handleResendOtp = () => {
-    const generatedOtp = generateOtp();
-    sessionStorage.setItem('registrationOtp', generatedOtp);
+    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(newOtp);
+    sessionStorage.setItem('registrationOtp', newOtp);
     sessionStorage.setItem('registrationOtpTime', Date.now().toString());
-    console.log('New Registration OTP for testing:', generatedOtp);
+    console.log('New Registration OTP for testing:', newOtp);
+    setShowOtpPopup(true);
+    setCopiedOtp(false);
     setTimeLeft(300);
     setOtp('');
     setError('');
@@ -156,6 +181,59 @@ export default function PublicRegistrationPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* OTP Popup */}
+      <AnimatePresence>
+        {showOtpPopup && (
+          <motion.div
+            initial={{ opacity: 0, x: 400 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 400 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-6 right-6 z-50 max-w-sm"
+          >
+            <div className="bg-white border-2 border-primary rounded-xl shadow-lg p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <CheckCircle className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-heading text-lg text-secondary">OTP भेजा गया</h3>
+                </div>
+                <button
+                  onClick={() => setShowOtpPopup(false)}
+                  className="text-secondary/50 hover:text-secondary"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <p className="font-paragraph text-sm text-secondary/70 mb-4">
+                आपके mobile number पर OTP भेजा गया है
+              </p>
+              
+              <div className="bg-pastelbeige p-4 rounded-lg mb-4 flex items-center justify-between">
+                <span className="font-heading text-3xl text-primary tracking-widest">
+                  {generatedOtp}
+                </span>
+                <button
+                  onClick={copyOtpToClipboard}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground p-2 rounded-lg transition-colors"
+                  title="Copy OTP"
+                >
+                  <Copy className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {copiedOtp && (
+                <p className="font-paragraph text-xs text-primary text-center">
+                  ✓ OTP copied!
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <div className="max-w-[100rem] mx-auto px-8 py-16 min-h-[70vh]">
         <motion.div

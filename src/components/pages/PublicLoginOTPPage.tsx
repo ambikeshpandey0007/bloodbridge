@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Lock, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Lock, AlertCircle, ArrowLeft, CheckCircle, Copy, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 export default function PublicLoginOTPPage() {
@@ -17,6 +17,9 @@ export default function PublicLoginOTPPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
   const [mobileNumber, setMobileNumber] = useState('');
+  const [showOtpPopup, setShowOtpPopup] = useState(false);
+  const [displayedOtp, setDisplayedOtp] = useState('');
+  const [copiedOtp, setCopiedOtp] = useState(false);
 
   useEffect(() => {
     // Get mobile number from sessionStorage
@@ -26,6 +29,13 @@ export default function PublicLoginOTPPage() {
       return;
     }
     setMobileNumber(storedMobile);
+
+    // Get OTP and show popup
+    const storedOtp = sessionStorage.getItem('otp');
+    if (storedOtp) {
+      setDisplayedOtp(storedOtp);
+      setShowOtpPopup(true);
+    }
 
     // Timer for OTP expiry
     const timer = setInterval(() => {
@@ -90,15 +100,77 @@ export default function PublicLoginOTPPage() {
     // Generate new OTP
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
     sessionStorage.setItem('otp', newOtp);
+    setDisplayedOtp(newOtp);
+    setShowOtpPopup(true);
+    setCopiedOtp(false);
     console.log('New OTP for testing:', newOtp);
     setTimeLeft(300);
     setOtp('');
     setError('');
   };
 
+  const copyOtpToClipboard = () => {
+    navigator.clipboard.writeText(displayedOtp);
+    setCopiedOtp(true);
+    setTimeout(() => setCopiedOtp(false), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* OTP Popup */}
+      <AnimatePresence>
+        {showOtpPopup && (
+          <motion.div
+            initial={{ opacity: 0, x: 400 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 400 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-6 right-6 z-50 max-w-sm"
+          >
+            <div className="bg-white border-2 border-primary rounded-xl shadow-lg p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <CheckCircle className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-heading text-lg text-secondary">OTP भेजा गया</h3>
+                </div>
+                <button
+                  onClick={() => setShowOtpPopup(false)}
+                  className="text-secondary/50 hover:text-secondary"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <p className="font-paragraph text-sm text-secondary/70 mb-4">
+                आपके mobile number पर OTP भेजा गया है
+              </p>
+              
+              <div className="bg-pastelbeige p-4 rounded-lg mb-4 flex items-center justify-between">
+                <span className="font-heading text-3xl text-primary tracking-widest">
+                  {displayedOtp}
+                </span>
+                <button
+                  onClick={copyOtpToClipboard}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground p-2 rounded-lg transition-colors"
+                  title="Copy OTP"
+                >
+                  <Copy className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {copiedOtp && (
+                <p className="font-paragraph text-xs text-primary text-center">
+                  ✓ OTP copied!
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <div className="max-w-[100rem] mx-auto px-8 py-16 min-h-[70vh]">
         <motion.div

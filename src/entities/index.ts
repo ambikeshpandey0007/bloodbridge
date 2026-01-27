@@ -73,6 +73,8 @@ export interface DonationHistory {
   donationType?: string;
   /** @wixFieldType boolean */
   isSuccessful?: boolean;
+  /** @wixFieldType number */
+  number?: number;
 }
 
 
