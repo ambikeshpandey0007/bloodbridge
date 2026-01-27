@@ -85,14 +85,19 @@ export default function HomePage() {
 
             {/* Card Action Bar - The "Dark Bar" from inspiration */}
             <div className="bg-primary p-0">
-              <div className="grid grid-cols-2 divide-x divide-primary-foreground/20">
+              <div className="grid grid-cols-3 divide-x divide-primary-foreground/20">
                 <Link to="/public-registration" className="group relative overflow-hidden flex items-center justify-between px-8 py-6 hover:bg-primary/90 transition-colors">
-                  <span className="text-primary-foreground font-heading text-xl relative z-10">Join as Donor</span>
+                  <span className="text-primary-foreground font-heading text-lg relative z-10">Register</span>
                   <ArrowRight className="text-primary-foreground w-6 h-6 transform group-hover:translate-x-1 transition-transform relative z-10" />
                   <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 </Link>
-                <Link to="/hospital-registration" className="group relative overflow-hidden flex items-center justify-between px-8 py-6 bg-secondary hover:bg-secondary/90 transition-colors">
-                  <span className="text-primary-foreground font-heading text-xl relative z-10">Hospital Login</span>
+                <Link to="/public-login" className="group relative overflow-hidden flex items-center justify-between px-8 py-6 bg-secondary hover:bg-secondary/90 transition-colors">
+                  <span className="text-primary-foreground font-heading text-lg relative z-10">Donor Login</span>
+                  <ArrowRight className="text-primary-foreground w-6 h-6 transform group-hover:translate-x-1 transition-transform relative z-10" />
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                </Link>
+                <Link to="/hospital-registration" className="group relative overflow-hidden flex items-center justify-between px-8 py-6 bg-primary/80 hover:bg-primary/70 transition-colors">
+                  <span className="text-primary-foreground font-heading text-lg relative z-10">Hospital</span>
                   <Hospital className="text-primary-foreground w-6 h-6 transform group-hover:scale-110 transition-transform relative z-10" />
                 </Link>
               </div>
