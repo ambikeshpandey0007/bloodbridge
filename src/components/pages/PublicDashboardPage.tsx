@@ -87,6 +87,23 @@ export default function PublicDashboardPage() {
   }
 
   const handleRespondToAlert = async (alertId: string, canDonate: boolean) => {
+    // Check age eligibility - must be 21 or older
+    if (user && user.age && user.age < 21) {
+      alert('❌ आप eligible नहीं हैं!\\n\\nDonation के लिए आपकी age कम से कम 21 साल होनी चाहिए।\\nआपकी age: ' + user.age + ' साल');
+      return;
+    }
+
+    // Check if user has already responded to this alert
+    const existingResponses = await BaseCrudService.getAll<AlertResponses>('alertresponses');
+    const hasAlreadyResponded = existingResponses.items.some(
+      r => r.sosAlertId === alertId && r.responderId === user?._id
+    );
+
+    if (hasAlreadyResponded) {
+      alert('⚠️ आप पहले ही इस alert के लिए response दे चुके हैं।\\n\\nएक बार response देने के बाद दोबारा नहीं दे सकते।');
+      return;
+    }
+
     const response: AlertResponses = {
       _id: crypto.randomUUID(),
       sosAlertId: alertId,
@@ -133,7 +150,7 @@ export default function PublicDashboardPage() {
           lastDonationDate: new Date().toISOString(),
         });
 
-        alert(`✅ आपका response भेजा गया!\n\n📋 Donor की Details:\nनाम: ${user.fullName}\nBlood Group: ${user.bloodGroup}\nMobile: ${user.mobileNumber}\n\n🩸 Blood Units: ${updatedUnitsNeeded} units बाकी हैं`);
+        alert(`✅ आपका response भेजा गया!\\n\\n📋 Donor की Details:\\nनाम: ${user.fullName}\\nBlood Group: ${user.bloodGroup}\\nMobile: ${user.mobileNumber}\\n\\n🩸 Blood Units: ${updatedUnitsNeeded} units बाकी हैं`);
       }
     } else {
       alert('Response successfully भेजा गया!');
@@ -210,7 +227,9 @@ export default function PublicDashboardPage() {
                         </div>
                         <div>
                           <p className="font-paragraph text-sm text-secondary/70 mb-1">Age</p>
-                          <p className="font-paragraph text-lg text-secondary">{user.age} years</p>
+                          <p className={`font-paragraph text-lg ${user.age && user.age < 21 ? 'text-destructive font-bold' : 'text-secondary'}`}>
+                            {user.age} years {user.age && user.age < 21 ? '❌ Not Eligible' : '✅ Eligible'}
+                          </p>
                         </div>
                       </div>
                       {user.lastDonationDate && (
@@ -359,7 +378,8 @@ export default function PublicDashboardPage() {
                             <div className="flex gap-3 pt-4">
                               <Button
                                 onClick={() => handleRespondToAlert(alert._id, true)}
-                                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph"
+                                disabled={user && user.age && user.age < 21}
+                                className={`flex-1 font-paragraph ${user && user.age && user.age < 21 ? 'opacity-50 cursor-not-allowed' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}
                               >
                                 <Heart className="w-4 h-4 mr-2" />
                                 Donate करूँगा
