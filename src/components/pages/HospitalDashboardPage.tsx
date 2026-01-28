@@ -43,6 +43,46 @@ export default function HospitalDashboardPage() {
     loadDashboardData();
   }, [userType, navigate]);
 
+  // Restrict access for unverified hospitals
+  if (!isLoading && hospital && !hospital.isVerified) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="max-w-[100rem] mx-auto px-8 py-16 min-h-[70vh] flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-md text-center"
+          >
+            <div className="bg-destructive/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-destructive" />
+            </div>
+            <h1 className="font-heading text-3xl text-secondary mb-4">
+              Verification Pending
+            </h1>
+            <p className="font-paragraph text-lg text-secondary/80 mb-6">
+              आपका Hospital अभी सत्यापन के लिए लंबित है। Developer द्वारा CMS dashboard से सत्यापन के बाद ही आप dashboard access कर सकेंगे।
+            </p>
+            <Alert className="border-destructive bg-destructive/10 mb-6">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <AlertDescription className="text-destructive font-paragraph">
+                ⏳ कृपया सत्यापन के लिए प्रतीक्षा करें। यह प्रक्रिया 24-48 घंटे में पूरी हो सकती है।
+              </AlertDescription>
+            </Alert>
+            <Button
+              onClick={() => navigate('/')}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-paragraph text-lg py-6"
+            >
+              Home पर जाएं
+            </Button>
+          </motion.div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   const loadDashboardData = async () => {
     setIsLoading(true);
     
