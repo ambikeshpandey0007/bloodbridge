@@ -103,7 +103,6 @@ export default function PublicLoginOTPPage() {
     setDisplayedOtp(newOtp);
     setShowOtpPopup(true);
     setCopiedOtp(false);
-    console.log('New OTP for testing:', newOtp);
     setTimeLeft(300);
     setOtp('');
     setError('');
@@ -265,7 +264,7 @@ export default function PublicLoginOTPPage() {
 
             <div className="mt-6 text-center">
               <p className="font-paragraph text-xs text-secondary/60">
-                Demo के लिए: OTP console में दिखेगा (F12 खोलें)
+                OTP आपके mobile number पर भेजा गया है
               </p>
             </div>
           </div>

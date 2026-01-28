@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { BaseCrudService } from '@/integrations';
 import { PublicUsers } from '@/entities';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Phone, AlertCircle } from 'lucide-react';
+import { Phone, AlertCircle, CheckCircle, Copy, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 export default function PublicLoginPage() {
@@ -21,6 +21,9 @@ export default function PublicLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [userId, setUserId] = useState('');
+  const [showOtpPopup, setShowOtpPopup] = useState(false);
+  const [displayedOtp, setDisplayedOtp] = useState('');
+  const [copiedOtp, setCopiedOtp] = useState(false);
 
   useEffect(() => {
     if (step === 'otp' && timeLeft > 0) {
@@ -71,8 +74,9 @@ export default function PublicLoginPage() {
       sessionStorage.setItem('loginUserId', user._id);
       sessionStorage.setItem('loginMobileNumber', mobileNumber);
       
-      // For demo purposes, show OTP in console
-      console.log('Login OTP for testing:', generatedOtp);
+      // Show OTP in secure popup (NOT in console)
+      setDisplayedOtp(generatedOtp);
+      setShowOtpPopup(true);
       
       // Move to OTP verification step
       setUserId(user._id);
@@ -127,15 +131,76 @@ export default function PublicLoginPage() {
   const handleResendOtp = () => {
     const generatedOtp = generateOtp();
     sessionStorage.setItem('loginOtp', generatedOtp);
-    console.log('New Login OTP for testing:', generatedOtp);
+    setDisplayedOtp(generatedOtp);
+    setShowOtpPopup(true);
+    setCopiedOtp(false);
     setTimeLeft(300);
     setOtp('');
     setError('');
   };
 
+  const copyOtpToClipboard = () => {
+    navigator.clipboard.writeText(displayedOtp);
+    setCopiedOtp(true);
+    setTimeout(() => setCopiedOtp(false), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* OTP Popup */}
+      <AnimatePresence>
+        {showOtpPopup && (
+          <motion.div
+            initial={{ opacity: 0, x: 400 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 400 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-6 right-6 z-50 max-w-sm"
+          >
+            <div className="bg-white border-2 border-primary rounded-xl shadow-lg p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <CheckCircle className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-heading text-lg text-secondary">OTP भेजा गया</h3>
+                </div>
+                <button
+                  onClick={() => setShowOtpPopup(false)}
+                  className="text-secondary/50 hover:text-secondary"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <p className="font-paragraph text-sm text-secondary/70 mb-4">
+                आपके mobile number पर OTP भेजा गया है
+              </p>
+              
+              <div className="bg-pastelbeige p-4 rounded-lg mb-4 flex items-center justify-between">
+                <span className="font-heading text-3xl text-primary tracking-widest">
+                  {displayedOtp}
+                </span>
+                <button
+                  onClick={copyOtpToClipboard}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground p-2 rounded-lg transition-colors"
+                  title="Copy OTP"
+                >
+                  <Copy className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {copiedOtp && (
+                <p className="font-paragraph text-xs text-primary text-center">
+                  ✓ OTP copied!
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <div className="max-w-[100rem] mx-auto px-8 py-16 min-h-[70vh]">
         <motion.div
@@ -297,7 +362,7 @@ export default function PublicLoginPage() {
 
             <div className="mt-6 text-center">
               <p className="font-paragraph text-xs text-secondary/60">
-                Demo के लिए: OTP console में दिखेगा (F12 खोलें)
+                OTP आपके mobile number पर भेजा गया है
               </p>
             </div>
           </div>

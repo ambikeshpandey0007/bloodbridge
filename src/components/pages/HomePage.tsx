@@ -85,7 +85,7 @@ export default function HomePage() {
 
             {/* Card Action Bar - The "Dark Bar" from inspiration */}
             <div className="bg-primary p-0">
-              <div className="grid grid-cols-3 divide-x divide-primary-foreground/20">
+              <div className="grid grid-cols-4 divide-x divide-primary-foreground/20">
                 <Link to="/public-registration" className="group relative overflow-hidden flex items-center justify-between px-8 py-6 hover:bg-primary/90 transition-colors">
                   <span className="text-primary-foreground font-heading text-lg relative z-10">Register</span>
                   <ArrowRight className="text-primary-foreground w-6 h-6 transform group-hover:translate-x-1 transition-transform relative z-10" />
@@ -97,8 +97,13 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 </Link>
                 <Link to="/hospital-registration" className="group relative overflow-hidden flex items-center justify-between px-8 py-6 bg-primary/80 hover:bg-primary/70 transition-colors">
-                  <span className="text-primary-foreground font-heading text-lg relative z-10">Hospital</span>
+                  <span className="text-primary-foreground font-heading text-lg relative z-10">Hospital Reg</span>
                   <Hospital className="text-primary-foreground w-6 h-6 transform group-hover:scale-110 transition-transform relative z-10" />
+                </Link>
+                <Link to="/hospital-login" className="group relative overflow-hidden flex items-center justify-between px-8 py-6 bg-primary/70 hover:bg-primary/60 transition-colors">
+                  <span className="text-primary-foreground font-heading text-lg relative z-10">Hospital Login</span>
+                  <ArrowRight className="text-primary-foreground w-6 h-6 transform group-hover:translate-x-1 transition-transform relative z-10" />
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 </Link>
               </div>
             </div>
