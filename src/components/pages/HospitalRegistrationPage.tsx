@@ -232,11 +232,11 @@ export default function HospitalRegistrationPage() {
                   <ul className="space-y-2 text-left">
                     <li className="font-paragraph text-sm text-secondary flex items-start gap-2">
                       <span className="text-primary font-bold">✓</span>
-                      <span>Hospital Login ID</span>
+                      <span>Hospital Login ID (Registration Number)</span>
                     </li>
                     <li className="font-paragraph text-sm text-secondary flex items-start gap-2">
                       <span className="text-primary font-bold">✓</span>
-                      <span>Temporary Password</span>
+                      <span>Password: UPBB + Registration Number</span>
                     </li>
                     <li className="font-paragraph text-sm text-secondary flex items-start gap-2">
                       <span className="text-primary font-bold">✓</span>

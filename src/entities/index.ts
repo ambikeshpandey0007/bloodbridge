@@ -127,6 +127,8 @@ export interface Hospitals {
   contactPerson?: string;
   /** @wixFieldType boolean */
   isBloodBank?: boolean;
+  /** @wixFieldType number */
+  number?: number;
 }
 
 

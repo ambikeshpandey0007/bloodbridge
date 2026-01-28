@@ -7,6 +7,7 @@ import PublicRegistrationPage from '@/components/pages/PublicRegistrationPage';
 import PublicLoginPage from '@/components/pages/PublicLoginPage';
 import PublicLoginOTPPage from '@/components/pages/PublicLoginOTPPage';
 import HospitalRegistrationPage from '@/components/pages/HospitalRegistrationPage';
+import HospitalLoginPage from '@/components/pages/HospitalLoginPage';
 import PublicDashboardPage from '@/components/pages/PublicDashboardPage';
 import HospitalDashboardPage from '@/components/pages/HospitalDashboardPage';
 import BloodAvailabilityPage from '@/components/pages/BloodAvailabilityPage';
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
       {
         path: "hospital-registration",
         element: <HospitalRegistrationPage />,
+      },
+      {
+        path: "hospital-login",
+        element: <HospitalLoginPage />,
       },
       {
         path: "public-dashboard",
