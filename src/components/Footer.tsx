@@ -83,13 +83,13 @@ export default function Footer() {
               <li className="flex items-start gap-3">
                 <Phone className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                 <span className="font-paragraph text-base text-secondary-foreground/80">
-                  +91 1800-BLOOD-HELP
+                  +91 6386874930
                 </span>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                 <span className="font-paragraph text-base text-secondary-foreground/80">
-                  India
+                  Prayagraj Uttar Pradesh India
                 </span>
               </li>
             </ul>
