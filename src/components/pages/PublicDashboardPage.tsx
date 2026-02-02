@@ -15,7 +15,7 @@ import { useAuthStore } from '@/store/authStore';
 
 export default function PublicDashboardPage() {
   const navigate = useNavigate();
-  const { userType } = useAuthStore();
+  const { userType, userId } = useAuthStore();
   const [user, setUser] = useState<PublicUsers | null>(null);
   const [donationHistory, setDonationHistory] = useState<DonationHistory[]>([]);
   const [sosAlerts, setSosAlerts] = useState<SOSAlerts[]>([]);
@@ -35,9 +35,10 @@ export default function PublicDashboardPage() {
   const loadDashboardData = async () => {
     setIsLoading(true);
     
-    const usersResult = await BaseCrudService.getAll<PublicUsers>('publicusers');
-    if (usersResult.items.length > 0) {
-      setUser(usersResult.items[0]);
+    // Fetch the logged-in user's data using their userId
+    if (userId) {
+      const userData = await BaseCrudService.getById<PublicUsers>('publicusers', userId);
+      setUser(userData);
     }
 
     const historyResult = await BaseCrudService.getAll<DonationHistory>('donationhistory');

@@ -18,7 +18,7 @@ import { useAuthStore } from '@/store/authStore';
 
 export default function HospitalDashboardPage() {
   const navigate = useNavigate();
-  const { userType } = useAuthStore();
+  const { userType, userId } = useAuthStore();
   const [hospital, setHospital] = useState<Hospitals | null>(null);
   const [bloodStocks, setBloodStocks] = useState<BloodStock[]>([]);
   const [sosAlerts, setSosAlerts] = useState<SOSAlerts[]>([]);
@@ -86,9 +86,10 @@ export default function HospitalDashboardPage() {
   const loadDashboardData = async () => {
     setIsLoading(true);
     
-    const hospitalsResult = await BaseCrudService.getAll<Hospitals>('hospitals');
-    if (hospitalsResult.items.length > 0) {
-      setHospital(hospitalsResult.items[0]);
+    // Fetch the logged-in hospital's data using their userId
+    if (userId) {
+      const hospitalData = await BaseCrudService.getById<Hospitals>('hospitals', userId);
+      setHospital(hospitalData);
     }
 
     const stocksResult = await BaseCrudService.getAll<BloodStock>('bloodstock');
