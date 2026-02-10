@@ -2,17 +2,17 @@
 import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
-import { 
-  ArrowRight, 
-  Heart, 
-  Activity, 
-  Shield, 
-  MapPin, 
-  Bell, 
-  Award, 
-  ChevronRight, 
-  Droplet, 
-  Hospital, 
+import {
+  ArrowRight,
+  Heart,
+  Activity,
+  Shield,
+  MapPin,
+  Bell,
+  Award,
+  ChevronRight,
+  Droplet,
+  Hospital,
   Users,
   Search
 } from 'lucide-react';
@@ -44,7 +44,7 @@ export default function HomePage() {
       {/* HERO SECTION - Inspired by Image Layout */}
       <section ref={heroRef} className="relative w-full min-h-screen md:h-[95vh] md:min-h-[800px] flex items-center overflow-hidden">
         {/* Parallax Background Image */}
-        <motion.div 
+        <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
           className="absolute inset-0 w-full h-full"
         >
@@ -72,12 +72,12 @@ export default function HomePage() {
                 <span className="h-px w-12 bg-primary"></span>
                 <span className="text-primary font-semibold tracking-widest uppercase text-xs sm:text-sm">The Lifeline Project</span>
               </div>
-              
+
               <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-[1.1] text-secondary">
                 Blood Bridge: <br />
                 <span className="italic text-primary">Connecting</span> Life to Life
               </h1>
-              
+
               <p className="text-base sm:text-lg md:text-xl text-secondary/80 leading-relaxed max-w-lg">
                 जीवन बचाने का सबसे बड़ा माध्यम। An advanced digital ecosystem bridging the gap between donors, hospitals, and those in critical need.
               </p>
@@ -240,21 +240,21 @@ export default function HomePage() {
 
             {/* Scrollable Right Side */}
             <div className="flex flex-col gap-12 md:gap-24">
-              <StepCard 
-                number="01" 
-                title="Register & Verify" 
+              <StepCard
+                number="01"
+                title="Register & Verify"
                 desc="Sign up using your Mobile Number and Aadhar Card. Secure OTP verification ensures a trusted community of real people."
                 image="https://static.wixstatic.com/media/cea3b9_c3720e2b2d5747df800ca045a7d78ce9~mv2.png?originWidth=768&originHeight=576"
               />
-              <StepCard 
-                number="02" 
-                title="Connect or Request" 
+              <StepCard
+                number="02"
+                title="Connect or Request"
                 desc="Donors can view requests nearby. Receivers can send SOS alerts specifying blood group, patient age, and units needed."
                 image="https://static.wixstatic.com/media/cea3b9_9f2c379f01e340b1b60fb06b2be11af0~mv2.png?originWidth=768&originHeight=576"
               />
-              <StepCard 
-                number="03" 
-                title="Save a Life" 
+              <StepCard
+                number="03"
+                title="Save a Life"
                 desc="Visit the hospital to donate. The hospital updates the records, and you receive a notification and a badge update."
                 image="https://static.wixstatic.com/media/cea3b9_44b167d20e684954882415895eca781c~mv2.png?originWidth=768&originHeight=576"
               />
@@ -293,13 +293,13 @@ export default function HomePage() {
             {/* Decorative Circles */}
             <div className="absolute top-0 left-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
-            
+
             <div className="relative z-10 max-w-3xl mx-auto">
               <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-primary-foreground mb-6 md:mb-8">
                 Ready to make a difference?
               </h2>
               <p className="text-base sm:text-lg md:text-xl text-primary-foreground/80 mb-8 md:mb-12 leading-relaxed">
-                Join thousands of donors and hospitals in India's most efficient blood donation network. 
+                Join thousands of donors and hospitals in India's most efficient blood donation network.
                 Register today and be the reason someone smiles tomorrow.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
@@ -330,7 +330,7 @@ function FeatureCard({ icon: Icon, title, desc, bg, index }: { icon: any, title:
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
-  return (
+  return (xz
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 20 }}
