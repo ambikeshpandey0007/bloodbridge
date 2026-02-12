@@ -330,7 +330,7 @@ function FeatureCard({ icon: Icon, title, desc, bg, index }: { icon: any, title:
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
-  return (xz
+  return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 20 }}
