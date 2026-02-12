@@ -36,28 +36,10 @@ export default defineConfig({
       auth: true,
     }),
     ...(isBuild ? [monitoring()] : []),
-    react(isBuild ? {} : {
-      babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] },
-    }),
+    react({ babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] } }),
   ],
   vite: {
     plugins: [customErrorOverlayPlugin()],
-    cacheDir: 'node_modules/.cache/.vite',
-    optimizeDeps: {
-      include: [
-        'react',
-        'react-dom',
-        'zustand',
-        'framer-motion',
-        'date-fns',
-        'clsx',
-        'class-variance-authority',
-        'tailwind-merge',
-        '@radix-ui/*',
-        '@wix/*',
-        'zod',
-      ],
-    },
     css: !isBuild ? {
       postcss: {
         plugins: [
